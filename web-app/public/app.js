@@ -16,8 +16,7 @@ let audioContext = null;
 let isRecording = false;
 let audioQueue = [];
 let isPlaying = false;
-let currentOriginal = '';
-let currentTranslated = '';
+let currentText = '';  // Current accumulated text
 
 // ===== WebSocket Connection =====
 function connectWebSocket() {
@@ -36,6 +35,8 @@ function connectWebSocket() {
             case 'status':
                 if (data.status === 'ready') {
                     updateStatus('connected', '已连接');
+                } else if (data.status === 'disconnected') {
+                    updateStatus('disconnected', '已断开');
                 }
                 break;
 
@@ -49,6 +50,10 @@ function connectWebSocket() {
 
             case 'turnComplete':
                 handleTurnComplete();
+                break;
+
+            case 'interrupted':
+                console.log('Interrupted');
                 break;
 
             case 'error':
@@ -176,62 +181,100 @@ function base64ToArrayBuffer(base64) {
 }
 
 // ===== Handle Responses =====
+let currentOriginal = '';
+let currentTranslation = '';
+
 function handleTextResponse(text) {
     console.log('Received text:', text);
 
-    // Parse [原文] and [译文] tags
-    const lines = text.split('\n');
-    for (const line of lines) {
-        const trimmedLine = line.trim();
+    // Extract both original and translation from model output
+    const result = extractBilingual(text);
 
-        if (trimmedLine.startsWith('[原文]')) {
-            currentOriginal = trimmedLine.replace('[原文]', '').trim();
-            originalText.textContent = currentOriginal || '-';
-        } else if (trimmedLine.startsWith('[译文]')) {
-            currentTranslated = trimmedLine.replace('[译文]', '').trim();
-            translatedText.textContent = currentTranslated || '-';
-        } else if (trimmedLine.length > 0) {
-            // If no tags, treat as translated text (streaming)
-            if (!currentTranslated) {
-                currentTranslated = trimmedLine;
-            } else {
-                currentTranslated += trimmedLine;
-            }
-            translatedText.textContent = currentTranslated || '-';
-        }
+    if (result) {
+        currentOriginal = result.original;
+        currentTranslation = result.translation;
+
+        // Update the current display
+        originalText.textContent = currentOriginal || '-';
+        translatedText.textContent = currentTranslation || '-';
     }
 }
 
-function handleTurnComplete() {
-    // Add to history if we have both original and translated
-    if (currentOriginal && currentTranslated) {
-        addSubtitleItem(currentOriginal, currentTranslated);
+// Extract both original and translated text from model's verbose output
+function extractBilingual(text) {
+    // The model outputs patterns like:
+    // "我想跟你开一个会议" -> "I'd like to have a meeting with you"
+    // or: The original request, "中文内容," now reads, "English content."
+    // The FIRST quoted text is always what the user said (original)
+    // The SECOND quoted text is the translation
+
+    // Find all quoted strings in order
+    const allQuotes = [...text.matchAll(/"([^"]+)"/g)].map(m => m[1]);
+
+    if (allQuotes.length >= 2) {
+        // First quote is original (what user said), second is translation
+        return {
+            original: allQuotes[0],
+            translation: allQuotes[1]
+        };
     }
 
-    // Reset current
+    // If only one quote found, try to determine what it is
+    if (allQuotes.length === 1) {
+        const quote = allQuotes[0];
+        const hasChinese = /[\u4e00-\u9fa5]/.test(quote);
+
+        // If we already have an original, this must be the translation
+        if (currentOriginal) {
+            return { original: currentOriginal, translation: quote };
+        } else {
+            return { original: quote, translation: '' };
+        }
+    }
+
+    return null;
+}
+
+function handleTurnComplete() {
+    // When turn is complete, save to history if we have content
+    if (currentOriginal || currentTranslation) {
+        addSubtitleItem(currentOriginal, currentTranslation);
+    }
+
+    // Reset for next turn
     currentOriginal = '';
-    currentTranslated = '';
+    currentTranslation = '';
     originalText.textContent = '-';
     translatedText.textContent = '-';
 }
 
-function addSubtitleItem(original, translated) {
+function addSubtitleItem(original, translation) {
     const item = document.createElement('div');
     item.className = 'subtitle-item';
+
+    // Get current timestamp
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+    // Determine which is source and which is target based on content
+    const hasChinese = /[\u4e00-\u9fa5]/.test(original);
+    const sourceLabel = hasChinese ? '中文' : 'EN';
+    const targetLabel = hasChinese ? 'EN' : '中文';
+
     item.innerHTML = `
-        <div class="subtitle-original">
-            <span class="subtitle-lang">原文</span>
-            <p class="subtitle-text">${escapeHtml(original)}</p>
+        <div class="subtitle-header">
+            <span class="subtitle-time">${timeStr}</span>
         </div>
-        <div class="subtitle-arrow">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M5 12h14"/>
-                <path d="M12 5l7 7-7 7"/>
-            </svg>
-        </div>
-        <div class="subtitle-translated">
-            <span class="subtitle-lang">译文</span>
-            <p class="subtitle-text">${escapeHtml(translated)}</p>
+        <div class="subtitle-bilingual">
+            <div class="subtitle-source">
+                <span class="lang-tag source-tag">${sourceLabel}</span>
+                <p class="subtitle-text source-text">${escapeHtml(original || '-')}</p>
+            </div>
+            <div class="subtitle-arrow">→</div>
+            <div class="subtitle-target">
+                <span class="lang-tag target-tag">${targetLabel}</span>
+                <p class="subtitle-text target-text">${escapeHtml(translation || '-')}</p>
+            </div>
         </div>
     `;
 
@@ -296,14 +339,9 @@ async function playAudioQueue() {
 // ===== Clear History =====
 function clearHistory() {
     subtitlesWrapper.innerHTML = '';
-    originalText.textContent = '-';
     translatedText.textContent = '-';
-    currentOriginal = '';
-    currentTranslated = '';
-
-    if (subtitlesWrapper.children.length === 0) {
-        emptyState.classList.remove('hidden');
-    }
+    currentText = '';
+    emptyState.classList.remove('hidden');
 }
 
 // ===== Event Listeners =====
