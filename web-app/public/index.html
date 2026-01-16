@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="实时会议翻译器 - 中英双语实时翻译与字幕显示">
+    <title>实时会议翻译器 | Meeting Translator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="background-effects">
+        <div class="gradient-orb orb-1"></div>
+        <div class="gradient-orb orb-2"></div>
+        <div class="gradient-orb orb-3"></div>
+    </div>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                        <line x1="12" y1="19" x2="12" y2="22"/>
+                    </svg>
+                </div>
+                <h1>实时翻译<span class="logo-highlight">Translator</span></h1>
+            </div>
+            <div class="status-badge" id="statusBadge">
+                <span class="status-dot"></span>
+                <span class="status-text">等待连接</span>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Subtitle Display -->
+            <section class="subtitle-section">
+                <div class="subtitle-container" id="subtitleContainer">
+                    <div class="empty-state" id="emptyState">
+                        <div class="empty-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                                <path d="M8 9h8"/>
+                                <path d="M8 13h6"/>
+                            </svg>
+                        </div>
+                        <p class="empty-title">准备开始翻译</p>
+                        <p class="empty-subtitle">点击下方按钮开始实时翻译会议内容</p>
+                    </div>
+                    <div class="subtitles-wrapper" id="subtitlesWrapper">
+                        <!-- Subtitles will be inserted here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Current Translation Display -->
+            <section class="current-translation" id="currentTranslation">
+                <div class="translation-card original">
+                    <div class="translation-label">
+                        <span class="lang-badge">原文</span>
+                    </div>
+                    <p class="translation-text" id="originalText">-</p>
+                </div>
+                <div class="translation-divider">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M5 12h14"/>
+                        <path d="M12 5l7 7-7 7"/>
+                    </svg>
+                </div>
+                <div class="translation-card translated">
+                    <div class="translation-label">
+                        <span class="lang-badge">译文</span>
+                    </div>
+                    <p class="translation-text" id="translatedText">-</p>
+                </div>
+            </section>
+        </main>
+
+        <!-- Controls -->
+        <footer class="controls">
+            <div class="control-group">
+                <button class="btn btn-primary" id="startBtn">
+                    <span class="btn-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+                            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                            <line x1="12" y1="19" x2="12" y2="22"/>
+                        </svg>
+                    </span>
+                    <span class="btn-text">开始翻译</span>
+                </button>
+                <button class="btn btn-secondary" id="stopBtn" disabled>
+                    <span class="btn-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="6" y="6" width="12" height="12" rx="2"/>
+                        </svg>
+                    </span>
+                    <span class="btn-text">停止翻译</span>
+                </button>
+                <button class="btn btn-ghost" id="clearBtn">
+                    <span class="btn-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 6h18"/>
+                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                        </svg>
+                    </span>
+                    <span class="btn-text">清除记录</span>
+                </button>
+            </div>
+            <div class="audio-visualizer" id="audioVisualizer">
+                <div class="viz-bar"></div>
+                <div class="viz-bar"></div>
+                <div class="viz-bar"></div>
+                <div class="viz-bar"></div>
+                <div class="viz-bar"></div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+# Python virtual environment
+venv/
+__pycache__/
+
+# OS files
+.DS_Store
+
+# Web app dependencies and env
+web-app/node_modules/
+web-app/.env
+web-app/.env.local
