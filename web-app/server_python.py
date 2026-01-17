@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from typing import Optional
 import json
 import base64
+import ssl
 
 # Web server dependencies
 from aiohttp import web
@@ -236,13 +237,18 @@ async def websocket_handler(request):
                     
                     logging.info(f"📤 Starting translation: {source_lang} → {target_lang}")
                     
-                    # Connect to Volcengine
+                    # Connect to Volcengine with SSL context (skip cert verification for macOS)
                     headers = await build_http_headers(connect_id)
+                    ssl_context = ssl.create_default_context()
+                    ssl_context.check_hostname = False
+                    ssl_context.verify_mode = ssl.CERT_NONE
+                    
                     volc_ws = await websockets.connect(
                         config.ws_url,
                         additional_headers=headers,
                         max_size=100000000,
-                        ping_interval=None
+                        ping_interval=None,
+                        ssl=ssl_context
                     )
                     
                     logging.info("✅ Connected to Volcengine AST API")

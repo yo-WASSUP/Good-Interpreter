@@ -8,7 +8,7 @@
         "dev": "node server.js",
         "start:volcengine": "node server-volcengine.js",
         "dev:volcengine": "node server-volcengine.js",
-        "start:python": "ast_python\\venv\\Scripts\\python server_python.py"
+        "start:python": "./venv/bin/python server_python.py"
     },
     "dependencies": {
         "@google/genai": "^0.7.0",
