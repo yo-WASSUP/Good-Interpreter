@@ -7,13 +7,16 @@
         "start": "node server.js",
         "dev": "node server.js",
         "start:volcengine": "node server-volcengine.js",
-        "dev:volcengine": "node server-volcengine.js"
+        "dev:volcengine": "node server-volcengine.js",
+        "start:python": "ast_python\\venv\\Scripts\\python server_python.py"
     },
     "dependencies": {
         "@google/genai": "^0.7.0",
+        "@volcengine/openapi": "^1.35.0",
         "cors": "^2.8.5",
         "dotenv": "^16.3.1",
         "express": "^4.18.2",
+        "protobufjs": "^8.0.0",
         "ws": "^8.14.2"
     },
     "engines": {

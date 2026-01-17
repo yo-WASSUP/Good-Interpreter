@@ -765,60 +765,160 @@ body {
     color: var(--text-primary);
 }
 
-/* ===== Audio Visualizer ===== */
-.audio-visualizer {
+/* ===== Volume Visualizer ===== */
+.volume-visualizer {
     display: flex;
-    align-items: flex-end;
-    gap: 4px;
-    height: 40px;
+    align-items: center;
+    gap: var(--space-md);
     padding: 0 var(--space-md);
     opacity: 0;
     transition: var(--transition-base);
+    pointer-events: none;
 }
 
-.audio-visualizer.active {
+.volume-visualizer.active {
     opacity: 1;
 }
 
-.viz-bar {
-    width: 4px;
-    background: var(--accent-gradient);
-    border-radius: var(--radius-full);
-    transition: height 100ms ease;
+/* Circular volume ring */
+.volume-ring {
+    position: relative;
+    width: 56px;
+    height: 56px;
 }
 
-.audio-visualizer.active .viz-bar {
-    animation: visualize 0.5s ease-in-out infinite alternate;
+.volume-svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
 }
 
-.viz-bar:nth-child(1) {
-    animation-delay: 0s;
+.volume-bg {
+    fill: none;
+    stroke: var(--glass-border);
+    stroke-width: 4;
 }
 
-.viz-bar:nth-child(2) {
-    animation-delay: 0.1s;
+.volume-level {
+    fill: none;
+    stroke: url(#volumeGradient);
+    stroke-width: 4;
+    stroke-linecap: round;
+    stroke-dasharray: 283;
+    stroke-dashoffset: 283;
+    transition: stroke-dashoffset 100ms ease-out;
 }
 
-.viz-bar:nth-child(3) {
-    animation-delay: 0.2s;
+/* Add gradient definition via CSS (fallback) */
+.volume-level {
+    stroke: var(--accent-primary);
 }
 
-.viz-bar:nth-child(4) {
-    animation-delay: 0.3s;
+.volume-visualizer.active .volume-level {
+    stroke: var(--accent-secondary);
 }
 
-.viz-bar:nth-child(5) {
-    animation-delay: 0.4s;
+.volume-visualizer.loud .volume-level {
+    stroke: var(--status-success);
 }
 
-@keyframes visualize {
-    0% {
-        height: 8px;
-    }
+.volume-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 24px;
+    height: 24px;
+    color: var(--text-muted);
+    transition: var(--transition-base);
+}
 
+.volume-visualizer.active .volume-icon {
+    color: var(--accent-primary-light);
+}
+
+.volume-visualizer.loud .volume-icon {
+    color: var(--status-success);
+    animation: pulse-icon 0.5s ease-in-out infinite;
+}
+
+@keyframes pulse-icon {
+
+    0%,
     100% {
-        height: 32px;
+        transform: translate(-50%, -50%) scale(1);
     }
+
+    50% {
+        transform: translate(-50%, -50%) scale(1.1);
+    }
+}
+
+/* Volume bars */
+.volume-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 40px;
+}
+
+.vol-bar {
+    width: 4px;
+    min-height: 4px;
+    height: 4px;
+    background: linear-gradient(180deg, var(--accent-secondary), var(--accent-primary));
+    border-radius: var(--radius-full);
+    transition: height 80ms ease-out;
+}
+
+.vol-bar:nth-child(1) {
+    transition-delay: 0ms;
+}
+
+.vol-bar:nth-child(2) {
+    transition-delay: 15ms;
+}
+
+.vol-bar:nth-child(3) {
+    transition-delay: 30ms;
+}
+
+.vol-bar:nth-child(4) {
+    transition-delay: 45ms;
+}
+
+.vol-bar:nth-child(5) {
+    transition-delay: 45ms;
+}
+
+.vol-bar:nth-child(6) {
+    transition-delay: 30ms;
+}
+
+.vol-bar:nth-child(7) {
+    transition-delay: 15ms;
+}
+
+.vol-bar:nth-child(8) {
+    transition-delay: 0ms;
+}
+
+/* Volume label */
+.volume-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    min-width: 40px;
+    text-align: center;
+    transition: var(--transition-base);
+}
+
+.volume-visualizer.active .volume-label {
+    color: var(--text-secondary);
+}
+
+.volume-visualizer.loud .volume-label {
+    color: var(--status-success);
 }
 
 /* ===== Responsive ===== */

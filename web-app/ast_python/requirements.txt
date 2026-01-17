@@ -1,0 +1,4 @@
+websockets
+protobuf
+aiohttp
+python-dotenv

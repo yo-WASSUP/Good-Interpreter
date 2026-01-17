@@ -7,27 +7,38 @@ const emptyState = document.getElementById('emptyState');
 const subtitlesWrapper = document.getElementById('subtitlesWrapper');
 const originalText = document.getElementById('originalText');
 const translatedText = document.getElementById('translatedText');
-const audioVisualizer = document.getElementById('audioVisualizer');
 const micSelect = document.getElementById('micSelect');
 const refreshMicBtn = document.getElementById('refreshMicBtn');
 const sourceLanguage = document.getElementById('sourceLanguage');
 const targetLanguage = document.getElementById('targetLanguage');
 const swapLangBtn = document.getElementById('swapLangBtn');
 
+// Volume visualizer elements
+const volumeVisualizer = document.getElementById('volumeVisualizer');
+const volumeLevel = document.getElementById('volumeLevel');
+const volumeLabel = document.getElementById('volumeLabel');
+const volumeBars = [];
+for (let i = 0; i < 8; i++) {
+    volumeBars.push(document.getElementById(`volBar${i}`));
+}
+
 // ===== State =====
 let ws = null;
 let audioContext = null;
+let analyserNode = null;
 let isRecording = false;
 let audioQueue = [];
 let isPlaying = false;
 let selectedDeviceId = null;
 let currentAsrText = '';
 let currentTranslationText = '';
+let volumeAnimationId = null;
 
 // ===== WebSocket Connection =====
 function connectWebSocket() {
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    ws = new WebSocket(`${wsProtocol}//${window.location.host}`);
+    // Support both Node.js (/) and Python (/ws) backends
+    ws = new WebSocket(`${wsProtocol}//${window.location.host}/ws`);
 
     ws.onopen = () => {
         console.log('WebSocket connected');
@@ -173,6 +184,11 @@ async function startRecording() {
         const source = audioContext.createMediaStreamSource(stream);
         const processor = audioContext.createScriptProcessor(4096, 1, 1);
 
+        // Create analyser for volume visualization
+        analyserNode = audioContext.createAnalyser();
+        analyserNode.fftSize = 256;
+        source.connect(analyserNode);
+
         processor.onaudioprocess = (e) => {
             if (!isRecording || !ws || ws.readyState !== WebSocket.OPEN) return;
 
@@ -192,9 +208,12 @@ async function startRecording() {
         isRecording = true;
         startBtn.disabled = true;
         stopBtn.disabled = false;
-        audioVisualizer.classList.add('active');
+        volumeVisualizer.classList.add('active');
         updateStatus('recording', '正在录音...');
         emptyState.classList.add('hidden');
+
+        // Start volume visualization
+        startVolumeVisualization();
 
     } catch (error) {
         console.error('Error starting recording:', error);
@@ -205,6 +224,9 @@ async function startRecording() {
 function stopRecording() {
     isRecording = false;
 
+    // Stop volume visualization
+    stopVolumeVisualization();
+
     // Send stop signal to server
     if (ws && ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({ type: 'stop' }));
@@ -213,17 +235,87 @@ function stopRecording() {
     if (audioContext) {
         audioContext.close();
         audioContext = null;
+        analyserNode = null;
     }
 
     startBtn.disabled = false;
     stopBtn.disabled = true;
-    audioVisualizer.classList.remove('active');
+    volumeVisualizer.classList.remove('active');
+    volumeVisualizer.classList.remove('loud');
 
     if (ws && ws.readyState === WebSocket.OPEN) {
         updateStatus('connected', '已连接');
     } else {
         updateStatus('disconnected', '已断开');
     }
+}
+
+// ===== Volume Visualization =====
+function startVolumeVisualization() {
+    if (!analyserNode) return;
+
+    const dataArray = new Uint8Array(analyserNode.frequencyBinCount);
+
+    function updateVolume() {
+        if (!isRecording || !analyserNode) return;
+
+        analyserNode.getByteFrequencyData(dataArray);
+
+        // Calculate average volume
+        let sum = 0;
+        for (let i = 0; i < dataArray.length; i++) {
+            sum += dataArray[i];
+        }
+        const average = sum / dataArray.length;
+        const normalizedVolume = Math.min(average / 128, 1); // 0 to 1
+
+        // Update circular progress
+        const circumference = 283; // 2 * PI * 45
+        const offset = circumference - (normalizedVolume * circumference);
+        volumeLevel.style.strokeDashoffset = offset;
+
+        // Update volume bars with frequency data
+        const barCount = volumeBars.length;
+        const step = Math.floor(dataArray.length / barCount);
+        for (let i = 0; i < barCount; i++) {
+            const value = dataArray[i * step];
+            const height = Math.max(4, (value / 255) * 36);
+            volumeBars[i].style.height = `${height}px`;
+        }
+
+        // Update label and loud state
+        if (normalizedVolume > 0.6) {
+            volumeVisualizer.classList.add('loud');
+            volumeLabel.textContent = '响亮';
+        } else if (normalizedVolume > 0.3) {
+            volumeVisualizer.classList.remove('loud');
+            volumeLabel.textContent = '正常';
+        } else if (normalizedVolume > 0.05) {
+            volumeVisualizer.classList.remove('loud');
+            volumeLabel.textContent = '轻声';
+        } else {
+            volumeVisualizer.classList.remove('loud');
+            volumeLabel.textContent = '静音';
+        }
+
+        volumeAnimationId = requestAnimationFrame(updateVolume);
+    }
+
+    updateVolume();
+}
+
+function stopVolumeVisualization() {
+    if (volumeAnimationId) {
+        cancelAnimationFrame(volumeAnimationId);
+        volumeAnimationId = null;
+    }
+
+    // Reset visuals
+    volumeLevel.style.strokeDashoffset = 283;
+    volumeBars.forEach(bar => {
+        bar.style.height = '4px';
+    });
+    volumeLabel.textContent = '静音';
 }
 
 // ===== Audio Conversion Utils =====
@@ -349,52 +441,87 @@ function escapeHtml(text) {
 }
 
 // ===== Audio Playback =====
-async function handleAudioResponse(data) {
-    const audioData = base64ToArrayBuffer(data.data);
-    audioQueue.push({
-        data: audioData,
-        sampleRate: data.sampleRate || 24000
-    });
+// Collect audio chunks and play them together
+let audioChunks = [];
+let audioPlaybackContext = null;
 
-    if (!isPlaying) {
-        playAudioQueue();
+async function handleAudioResponse(data) {
+    // Collect opus audio chunks
+    const audioData = base64ToArrayBuffer(data.data);
+    audioChunks.push(audioData);
+
+    // Don't play immediately - wait for TTSSentenceEnd to play all at once
+    // Or set a timeout to play if no more data comes
+    clearTimeout(window.audioPlayTimeout);
+    window.audioPlayTimeout = setTimeout(() => {
+        if (audioChunks.length > 0 && !isPlaying) {
+            playCollectedAudio();
+        }
+    }, 300);
+}
+
+// Called when TTSSentenceEnd is received or timeout
+async function playCollectedAudio() {
+    if (audioChunks.length === 0 || isPlaying) return;
+
+    isPlaying = true;
+
+    // Combine all chunks into one buffer
+    const totalLength = audioChunks.reduce((sum, chunk) => sum + chunk.byteLength, 0);
+    const combinedBuffer = new Uint8Array(totalLength);
+    let offset = 0;
+    for (const chunk of audioChunks) {
+        combinedBuffer.set(new Uint8Array(chunk), offset);
+        offset += chunk.byteLength;
+    }
+    audioChunks = [];
+
+    try {
+        // Create audio blob and play with HTML5 Audio
+        // This is more reliable for opus/ogg format than Web Audio API
+        const blob = new Blob([combinedBuffer], { type: 'audio/ogg' });
+        const url = URL.createObjectURL(blob);
+        const audio = new Audio(url);
+
+        audio.onended = () => {
+            URL.revokeObjectURL(url);
+            isPlaying = false;
+        };
+
+        audio.onerror = (e) => {
+            console.error('Audio playback error:', e);
+            URL.revokeObjectURL(url);
+            isPlaying = false;
+
+            // Fallback: try decodeAudioData
+            tryDecodeAudioData(combinedBuffer.buffer);
+        };
+
+        await audio.play();
+    } catch (error) {
+        console.error('Error playing audio:', error);
+        isPlaying = false;
     }
 }
 
-async function playAudioQueue() {
-    if (audioQueue.length === 0) {
-        isPlaying = false;
-        return;
-    }
-
-    isPlaying = true;
-    const audioItem = audioQueue.shift();
-
+// Fallback method using Web Audio API decodeAudioData
+async function tryDecodeAudioData(arrayBuffer) {
     try {
-        const playbackContext = new AudioContext({ sampleRate: audioItem.sampleRate });
+        const audioContext = new AudioContext();
+        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
 
-        // Convert Int16 PCM to Float32
-        const int16Array = new Int16Array(audioItem.data);
-        const float32Array = new Float32Array(int16Array.length);
-        for (let i = 0; i < int16Array.length; i++) {
-            float32Array[i] = int16Array[i] / 32768.0;
-        }
-
-        const audioBuffer = playbackContext.createBuffer(1, float32Array.length, audioItem.sampleRate);
-        audioBuffer.copyToChannel(float32Array, 0);
-
-        const source = playbackContext.createBufferSource();
+        const source = audioContext.createBufferSource();
         source.buffer = audioBuffer;
-        source.connect(playbackContext.destination);
+        source.connect(audioContext.destination);
 
         source.onended = () => {
-            playbackContext.close();
-            playAudioQueue();
+            audioContext.close();
+            isPlaying = false;
         };
 
         source.start();
     } catch (error) {
-        console.error('Error playing audio:', error);
+        console.error('Fallback decode failed:', error);
         isPlaying = false;
     }
 }

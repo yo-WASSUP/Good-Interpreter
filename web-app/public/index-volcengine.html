@@ -173,12 +173,32 @@
                     <span class="btn-text">清除记录</span>
                 </button>
             </div>
-            <div class="audio-visualizer" id="audioVisualizer">
-                <div class="viz-bar"></div>
-                <div class="viz-bar"></div>
-                <div class="viz-bar"></div>
-                <div class="viz-bar"></div>
-                <div class="viz-bar"></div>
+
+            <!-- Audio Volume Visualizer -->
+            <div class="volume-visualizer" id="volumeVisualizer">
+                <div class="volume-ring">
+                    <svg viewBox="0 0 100 100" class="volume-svg">
+                        <circle class="volume-bg" cx="50" cy="50" r="45" />
+                        <circle class="volume-level" cx="50" cy="50" r="45" id="volumeLevel" />
+                    </svg>
+                    <div class="volume-icon" id="volumeIcon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+                            <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="volume-bars">
+                    <div class="vol-bar" id="volBar0"></div>
+                    <div class="vol-bar" id="volBar1"></div>
+                    <div class="vol-bar" id="volBar2"></div>
+                    <div class="vol-bar" id="volBar3"></div>
+                    <div class="vol-bar" id="volBar4"></div>
+                    <div class="vol-bar" id="volBar5"></div>
+                    <div class="vol-bar" id="volBar6"></div>
+                    <div class="vol-bar" id="volBar7"></div>
+                </div>
+                <span class="volume-label" id="volumeLabel">静音</span>
             </div>
         </footer>
     </div>
