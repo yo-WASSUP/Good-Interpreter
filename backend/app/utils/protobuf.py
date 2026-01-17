@@ -94,10 +94,17 @@ def get_event_names():
 
 def build_start_session_request(
     session_id: str,
-    source_lang: str,
-    target_lang: str,
+    source_lang: str = "zh",
+    target_lang: str = "en",
 ) -> bytes:
-    """Build StartSession protobuf request."""
+    """
+    Build StartSession protobuf request.
+    
+    Args:
+        session_id: Session ID
+        source_lang: Source language code ('zh' or 'en')
+        target_lang: Target language code ('zh' or 'en')
+    """
     TranslateRequest, _, EventType = get_protobuf_types()
     config = get_config()
     
@@ -121,7 +128,7 @@ def build_start_session_request(
     request.target_audio.format = config.audio.target_format
     request.target_audio.rate = config.audio.target_rate
     
-    # Translation request
+    # Translation request - fixed language pair
     request.request.mode = "s2s"
     request.request.source_language = source_lang
     request.request.target_language = target_lang

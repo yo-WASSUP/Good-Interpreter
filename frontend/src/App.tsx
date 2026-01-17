@@ -10,8 +10,9 @@ import type { ConnectionStatus } from './types';
 import './App.css';
 
 function App() {
-  const [sourceLanguage, setSourceLanguage] = useState('zh');
-  const [targetLanguage, setTargetLanguage] = useState('en');
+  // Fixed language pair: Chinese ↔ English
+  const [sourceLanguage] = useState('zh');
+  const [targetLanguage] = useState('en');
   const [volume, setVolume] = useState(0);
   const [frequencyData, setFrequencyData] = useState<Uint8Array | null>(null);
 
@@ -75,11 +76,6 @@ function App() {
     clearSubtitles();
   }, [clearSubtitles]);
 
-  const handleSwapLanguages = useCallback(() => {
-    setSourceLanguage(targetLanguage);
-    setTargetLanguage(sourceLanguage);
-  }, [sourceLanguage, targetLanguage]);
-
   return (
     <>
       <BackgroundEffects />
@@ -100,8 +96,6 @@ function App() {
           isRecording={isRecording}
           microphones={microphones}
           selectedMicrophoneId={selectedMicrophoneId}
-          sourceLanguage={sourceLanguage}
-          targetLanguage={targetLanguage}
           volume={volume}
           frequencyData={frequencyData}
           onStart={handleStart}
@@ -109,9 +103,6 @@ function App() {
           onClear={handleClear}
           onMicrophoneChange={selectMicrophone}
           onRefreshMicrophones={refreshMicrophones}
-          onSourceLanguageChange={setSourceLanguage}
-          onTargetLanguageChange={setTargetLanguage}
-          onSwapLanguages={handleSwapLanguages}
         />
       </div>
     </>
