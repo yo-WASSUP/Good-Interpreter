@@ -5,7 +5,9 @@
     "main": "server.js",
     "scripts": {
         "start": "node server.js",
-        "dev": "node server.js"
+        "dev": "node server.js",
+        "start:volcengine": "node server-volcengine.js",
+        "dev:volcengine": "node server-volcengine.js"
     },
     "dependencies": {
         "@google/genai": "^0.7.0",
