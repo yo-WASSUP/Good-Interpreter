@@ -3,7 +3,6 @@ import {
   BackgroundEffects,
   Header,
   SubtitleDisplay,
-  CurrentTranslation,
   Controls,
 } from './components';
 import { useWebSocket, useAudioRecorder } from './hooks';
@@ -92,15 +91,8 @@ function App() {
           <SubtitleDisplay
             subtitles={subtitles}
             isEmpty={!isRecording && subtitles.length === 0}
-          />
-
-          <CurrentTranslation
-            originalText={currentAsr.text}
-            translatedText={currentTranslation.text}
-            isInterimOriginal={!currentAsr.isFinal && currentAsr.text.length > 0}
-            isInterimTranslation={
-              !currentTranslation.isFinal && currentTranslation.text.length > 0
-            }
+            currentSourceText={isRecording ? currentAsr.text : ''}
+            currentTargetText={isRecording ? currentTranslation.text : ''}
           />
         </main>
 

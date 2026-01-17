@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ConnectionStatus, SubtitleItem } from '../types';
 import { generateId } from '../utils/audio';
 import { useAudioPlayer } from './useAudioPlayer';
+import { getActiveSession, messagesToSubtitles } from '../services/api';
 
 interface UseWebSocketProps {
     sourceLanguage: string;
@@ -10,6 +11,7 @@ interface UseWebSocketProps {
 
 interface UseWebSocketReturn {
     status: ConnectionStatus;
+    sessionId: string | null;
     currentAsr: { text: string; isFinal: boolean };
     currentTranslation: { text: string; isFinal: boolean };
     subtitles: SubtitleItem[];
@@ -18,6 +20,7 @@ interface UseWebSocketReturn {
     sendAudio: (base64Data: string) => void;
     sendStop: () => void;
     clearSubtitles: () => void;
+    loadHistory: () => Promise<void>;
 }
 
 export function useWebSocket({
@@ -25,6 +28,7 @@ export function useWebSocket({
     targetLanguage,
 }: UseWebSocketProps): UseWebSocketReturn {
     const [status, setStatus] = useState<ConnectionStatus>('disconnected');
+    const [sessionId, setSessionId] = useState<string | null>(null);
     const [currentAsr, setCurrentAsr] = useState({ text: '', isFinal: false });
     const [currentTranslation, setCurrentTranslation] = useState({
         text: '',
@@ -37,14 +41,33 @@ export function useWebSocket({
     const currentTranslationRef = useRef('');
     const languagesRef = useRef({ source: sourceLanguage, target: targetLanguage });
 
-    const { playAudio, stopPlayback } = useAudioPlayer();
+    const { queueAudio, playQueuedAudio, stopPlayback } = useAudioPlayer();
 
     // Update language refs
     useEffect(() => {
         languagesRef.current = { source: sourceLanguage, target: targetLanguage };
     }, [sourceLanguage, targetLanguage]);
 
-    const handleTurnComplete = useCallback(() => {
+    // Load history on mount
+    const loadHistory = useCallback(async () => {
+        try {
+            const { session, messages } = await getActiveSession();
+            if (session && messages.length > 0) {
+                setSessionId(session.sessionId);
+                setSubtitles(messagesToSubtitles(messages));
+                console.log(`Loaded ${messages.length} messages from history`);
+            }
+        } catch (error) {
+            console.error('Failed to load history:', error);
+        }
+    }, []);
+
+    // Load history on mount
+    useEffect(() => {
+        loadHistory();
+    }, [loadHistory]);
+
+    const addSubtitle = useCallback(() => {
         if (currentAsrRef.current || currentTranslationRef.current) {
             const newSubtitle: SubtitleItem = {
                 id: generateId(),
@@ -63,6 +86,12 @@ export function useWebSocket({
         setCurrentAsr({ text: '', isFinal: false });
         setCurrentTranslation({ text: '', isFinal: false });
     }, []);
+
+    const handleTurnComplete = useCallback(async () => {
+        addSubtitle();
+        // Play all queued audio after user finishes speaking
+        await playQueuedAudio();
+    }, [addSubtitle, playQueuedAudio]);
 
     const connect = useCallback(() => {
         if (wsRef.current?.readyState === WebSocket.OPEN) return;
@@ -90,6 +119,11 @@ export function useWebSocket({
             const data = JSON.parse(event.data);
 
             switch (data.type) {
+                case 'sessionCreated':
+                    setSessionId(data.sessionId);
+                    console.log('Session created:', data.sessionId);
+                    break;
+
                 case 'status':
                     if (data.status === 'ready') {
                         setStatus('connected');
@@ -115,7 +149,14 @@ export function useWebSocket({
                     break;
 
                 case 'audio':
-                    playAudio(data.data);
+                    // Queue audio instead of playing immediately
+                    queueAudio(data.data);
+                    break;
+
+                case 'sentenceComplete':
+                    // Add subtitle and play queued audio when a sentence's TTS is complete
+                    addSubtitle();
+                    playQueuedAudio();
                     break;
 
                 case 'turnComplete':
@@ -138,7 +179,7 @@ export function useWebSocket({
             console.error('WebSocket error:', error);
             setStatus('error');
         };
-    }, [handleTurnComplete, playAudio]);
+    }, [handleTurnComplete, queueAudio, playQueuedAudio, addSubtitle]);
 
     const disconnect = useCallback(() => {
         if (wsRef.current) {
@@ -183,6 +224,7 @@ export function useWebSocket({
 
     return {
         status,
+        sessionId,
         currentAsr,
         currentTranslation,
         subtitles,
@@ -191,5 +233,6 @@ export function useWebSocket({
         sendAudio,
         sendStop,
         clearSubtitles,
+        loadHistory,
     };
 }

@@ -11,7 +11,8 @@ from pathlib import Path
 from aiohttp import web
 
 from .config import get_config, validate_config
-from .routes import websocket_handler
+from .routes import websocket_handler, setup_api_routes
+from .database import get_database
 
 
 def setup_logging(debug: bool = False):
@@ -50,14 +51,19 @@ def create_app() -> web.Application:
     app = web.Application()
     config = get_config()
     
-    # Routes
-    app.router.add_get("/", index_handler)
+    # WebSocket route
     app.router.add_get("/ws", websocket_handler)
+    
+    # REST API routes
+    setup_api_routes(app)
     
     # Static files - serve frontend dist if exists
     frontend_dist = config.base_dir.parent / "frontend" / "dist"
     if frontend_dist.exists():
         app.router.add_static("/assets", frontend_dist / "assets")
+    
+    # Index route (must be after /api routes)
+    app.router.add_get("/", index_handler)
     
     # Fallback: serve web-app public
     web_app_public = config.base_dir.parent / "web-app" / "public"
@@ -82,6 +88,10 @@ def main():
         sys.exit(1)
     
     logging.info("✅ Volcengine API credentials configured")
+    
+    # Initialize database
+    db = get_database()
+    logging.info("💾 Database initialized")
     
     # Create and run app
     app = create_app()

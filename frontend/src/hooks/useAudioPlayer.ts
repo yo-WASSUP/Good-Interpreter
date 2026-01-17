@@ -3,16 +3,26 @@ import { base64ToArrayBuffer } from '../utils/audio';
 
 interface UseAudioPlayerReturn {
     isPlaying: boolean;
-    playAudio: (base64Data: string) => void;
+    /** Add audio chunk to buffer (does not play immediately) */
+    queueAudio: (base64Data: string) => void;
+    /** Play all queued audio chunks */
+    playQueuedAudio: () => Promise<void>;
+    /** Clear all queued audio and stop playback */
     stopPlayback: () => void;
+    /** Check if there's audio in the queue */
+    hasQueuedAudio: () => boolean;
 }
 
 export function useAudioPlayer(): UseAudioPlayerReturn {
     const [isPlaying, setIsPlaying] = useState(false);
     const audioChunksRef = useRef<ArrayBuffer[]>([]);
-    const timeoutRef = useRef<number | null>(null);
 
-    const playCollectedAudio = useCallback(async () => {
+    const queueAudio = useCallback((base64Data: string) => {
+        const audioData = base64ToArrayBuffer(base64Data);
+        audioChunksRef.current.push(audioData);
+    }, []);
+
+    const playQueuedAudio = useCallback(async () => {
         if (audioChunksRef.current.length === 0 || isPlaying) return;
 
         setIsPlaying(true);
@@ -35,50 +45,39 @@ export function useAudioPlayer(): UseAudioPlayerReturn {
             const url = URL.createObjectURL(blob);
             const audio = new Audio(url);
 
-            audio.onended = () => {
-                URL.revokeObjectURL(url);
-                setIsPlaying(false);
-            };
+            return new Promise<void>((resolve) => {
+                audio.onended = () => {
+                    URL.revokeObjectURL(url);
+                    setIsPlaying(false);
+                    resolve();
+                };
 
-            audio.onerror = () => {
-                URL.revokeObjectURL(url);
-                setIsPlaying(false);
-            };
+                audio.onerror = () => {
+                    URL.revokeObjectURL(url);
+                    setIsPlaying(false);
+                    resolve();
+                };
 
-            await audio.play();
+                audio.play().catch((error) => {
+                    console.error('Error playing audio:', error);
+                    setIsPlaying(false);
+                    resolve();
+                });
+            });
         } catch (error) {
             console.error('Error playing audio:', error);
             setIsPlaying(false);
         }
     }, [isPlaying]);
 
-    const playAudio = useCallback(
-        (base64Data: string) => {
-            const audioData = base64ToArrayBuffer(base64Data);
-            audioChunksRef.current.push(audioData);
-
-            // Clear previous timeout
-            if (timeoutRef.current) {
-                clearTimeout(timeoutRef.current);
-            }
-
-            // Play after a short delay to collect chunks
-            timeoutRef.current = window.setTimeout(() => {
-                if (audioChunksRef.current.length > 0 && !isPlaying) {
-                    playCollectedAudio();
-                }
-            }, 300);
-        },
-        [isPlaying, playCollectedAudio]
-    );
-
     const stopPlayback = useCallback(() => {
         audioChunksRef.current = [];
-        if (timeoutRef.current) {
-            clearTimeout(timeoutRef.current);
-        }
         setIsPlaying(false);
     }, []);
 
-    return { isPlaying, playAudio, stopPlayback };
+    const hasQueuedAudio = useCallback(() => {
+        return audioChunksRef.current.length > 0;
+    }, []);
+
+    return { isPlaying, queueAudio, playQueuedAudio, stopPlayback, hasQueuedAudio };
 }

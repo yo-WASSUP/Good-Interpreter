@@ -256,6 +256,13 @@ class VolcengineService:
                             "format": "opus",
                             "sampleRate": self.config.audio.target_rate,
                         }
+                    
+                    # When TTS sentence ends, notify frontend to play queued audio
+                    if response.event == EventType.TTSSentenceEnd:
+                        await on_message(browser_msg) if browser_msg else None
+                        # Send sentenceComplete to trigger audio playback
+                        await on_message({"type": "sentenceComplete"})
+                        continue
                 
                 # Send message to browser
                 if browser_msg:
