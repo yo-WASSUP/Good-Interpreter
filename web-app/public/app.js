@@ -8,6 +8,8 @@ const subtitlesWrapper = document.getElementById('subtitlesWrapper');
 const originalText = document.getElementById('originalText');
 const translatedText = document.getElementById('translatedText');
 const audioVisualizer = document.getElementById('audioVisualizer');
+const micSelect = document.getElementById('micSelect');
+const refreshMicBtn = document.getElementById('refreshMicBtn');
 
 // ===== State =====
 let ws = null;
@@ -17,6 +19,7 @@ let isRecording = false;
 let audioQueue = [];
 let isPlaying = false;
 let currentText = '';  // Current accumulated text
+let selectedDeviceId = null;  // Selected microphone device ID
 
 // ===== WebSocket Connection =====
 function connectWebSocket() {
@@ -88,16 +91,68 @@ function updateStatus(status, text) {
     }
 }
 
+// ===== Microphone Device Management =====
+async function getMicrophoneDevices() {
+    try {
+        // Request permission first to get device labels
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const audioInputs = devices.filter(device => device.kind === 'audioinput');
+
+        // Clear existing options except the first placeholder
+        micSelect.innerHTML = '<option value="">选择麦克风...</option>';
+
+        audioInputs.forEach((device, index) => {
+            const option = document.createElement('option');
+            option.value = device.deviceId;
+            option.textContent = device.label || `麦克风 ${index + 1}`;
+            micSelect.appendChild(option);
+        });
+
+        // Auto-select default device if available
+        if (audioInputs.length > 0 && !selectedDeviceId) {
+            // Try to find default device or use first one
+            const defaultDevice = audioInputs.find(d => d.deviceId === 'default') || audioInputs[0];
+            micSelect.value = defaultDevice.deviceId;
+            selectedDeviceId = defaultDevice.deviceId;
+        } else if (selectedDeviceId) {
+            // Restore previously selected device
+            micSelect.value = selectedDeviceId;
+        }
+
+        console.log(`Found ${audioInputs.length} microphone(s)`);
+        return audioInputs;
+    } catch (error) {
+        console.error('Error getting microphone devices:', error);
+        alert('无法获取麦克风列表，请检查权限设置');
+        return [];
+    }
+}
+
+function handleMicrophoneChange(event) {
+    selectedDeviceId = event.target.value;
+    console.log('Selected microphone:', selectedDeviceId);
+}
+
 // ===== Audio Recording =====
 async function startRecording() {
     try {
+        // Build audio constraints with selected device
+        const audioConstraints = {
+            sampleRate: 16000,
+            channelCount: 1,
+            echoCancellation: true,
+            noiseSuppression: true
+        };
+
+        // Add device ID if one is selected
+        if (selectedDeviceId) {
+            audioConstraints.deviceId = { exact: selectedDeviceId };
+        }
+
         const stream = await navigator.mediaDevices.getUserMedia({
-            audio: {
-                sampleRate: 16000,
-                channelCount: 1,
-                echoCancellation: true,
-                noiseSuppression: true
-            }
+            audio: audioConstraints
         });
 
         audioContext = new AudioContext({ sampleRate: 16000 });
@@ -363,7 +418,13 @@ startBtn.addEventListener('click', () => {
 stopBtn.addEventListener('click', stopRecording);
 clearBtn.addEventListener('click', clearHistory);
 
+// Microphone selection events
+micSelect.addEventListener('change', handleMicrophoneChange);
+refreshMicBtn.addEventListener('click', getMicrophoneDevices);
+
 // ===== Initialize =====
 document.addEventListener('DOMContentLoaded', () => {
     updateStatus('disconnected', '等待连接');
+    // Load available microphones on page load
+    getMicrophoneDevices();
 });

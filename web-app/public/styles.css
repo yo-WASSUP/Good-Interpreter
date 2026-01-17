@@ -508,11 +508,126 @@ body {
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-xl);
     backdrop-filter: blur(20px);
+    flex-wrap: wrap;
+    gap: var(--space-md);
 }
 
 .control-group {
     display: flex;
     gap: var(--space-md);
+}
+
+/* ===== Microphone Selector ===== */
+.mic-selector-wrapper {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.mic-selector {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: var(--bg-card);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-xs) var(--space-sm);
+    transition: var(--transition-base);
+    min-width: 200px;
+}
+
+.mic-selector:hover {
+    border-color: var(--accent-primary);
+    background: var(--bg-card-hover);
+}
+
+.mic-selector:focus-within {
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+.mic-selector-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    color: var(--accent-primary-light);
+    flex-shrink: 0;
+}
+
+.mic-selector-icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+.mic-select {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.875rem;
+    padding: var(--space-xs) var(--space-sm);
+    cursor: pointer;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    min-width: 120px;
+}
+
+.mic-select option {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    padding: var(--space-sm);
+}
+
+.mic-selector-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    color: var(--text-muted);
+    transition: var(--transition-base);
+    flex-shrink: 0;
+    pointer-events: none;
+}
+
+.mic-selector-arrow svg {
+    width: 16px;
+    height: 16px;
+}
+
+.mic-selector:hover .mic-selector-arrow {
+    color: var(--accent-primary-light);
+}
+
+.btn-sm {
+    padding: var(--space-xs) var(--space-sm);
+}
+
+.btn-sm svg {
+    width: 18px;
+    height: 18px;
+}
+
+#refreshMicBtn {
+    transition: var(--transition-base);
+}
+
+#refreshMicBtn:hover:not(:disabled) svg {
+    animation: spin 0.5s ease-in-out;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* ===== Buttons ===== */

@@ -83,6 +83,34 @@
 
         <!-- Controls -->
         <footer class="controls">
+            <!-- Microphone Selection -->
+            <div class="mic-selector-wrapper">
+                <div class="mic-selector">
+                    <span class="mic-selector-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+                            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                            <line x1="12" y1="19" x2="12" y2="22"/>
+                        </svg>
+                    </span>
+                    <select id="micSelect" class="mic-select">
+                        <option value="">选择麦克风...</option>
+                    </select>
+                    <span class="mic-selector-arrow">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </span>
+                </div>
+                <button class="btn btn-ghost btn-sm" id="refreshMicBtn" title="刷新麦克风列表">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M23 4v6h-6"/>
+                        <path d="M1 20v-6h6"/>
+                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                    </svg>
+                </button>
+            </div>
+
             <div class="control-group">
                 <button class="btn btn-primary" id="startBtn">
                     <span class="btn-icon">
