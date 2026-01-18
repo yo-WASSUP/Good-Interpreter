@@ -1,5 +1,5 @@
 import { useRef, useEffect } from 'react';
-import { MessageSquare, ArrowDown } from 'lucide-react';
+import { MessageSquare } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { SubtitleItem } from '../../types';
 import { formatTime } from '../../utils/audio';
@@ -28,11 +28,7 @@ export function SubtitleDisplay({
         }
     }, [subtitles, currentSourceText, currentTargetText]);
 
-    const scrollToBottom = () => {
-        if (bottomRef.current) {
-            bottomRef.current.scrollIntoView({ behavior: 'smooth' });
-        }
-    };
+
 
     const hasCurrentText = currentSourceText || currentTargetText;
 
@@ -132,20 +128,6 @@ export function SubtitleDisplay({
                     <div ref={bottomRef} />
                 </div>
             </div>
-
-            {/* Scroll to bottom button */}
-            {subtitles.length > 3 && (
-                <motion.button
-                    className="scroll-to-bottom"
-                    onClick={scrollToBottom}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                >
-                    <ArrowDown size={16} />
-                </motion.button>
-            )}
         </section>
     );
 }

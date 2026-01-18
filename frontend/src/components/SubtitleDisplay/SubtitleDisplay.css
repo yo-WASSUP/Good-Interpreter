@@ -38,8 +38,8 @@
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-lg);
     backdrop-filter: blur(20px);
-    min-height: 300px;
-    max-height: 50vh;
+    min-height: 400px;
+    max-height: 70vh;
 }
 
 .subtitles-wrapper {

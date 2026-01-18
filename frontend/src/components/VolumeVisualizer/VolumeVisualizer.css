@@ -11,9 +11,9 @@
             rgba(25, 25, 40, 0.8));
     border: 1px solid rgba(99, 102, 241, 0.3);
     border-radius: 16px;
-    opacity: 0;
+    opacity: 1;
     transition: all 0.3s ease;
-    pointer-events: none;
+    pointer-events: auto;
     backdrop-filter: blur(12px);
 }
 

@@ -93,8 +93,8 @@ export function VolumeVisualizer({
     return (
         <motion.div
             className={`volume-visualizer ${isActive ? 'active' : ''}`}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: isActive ? 1 : 0 }}
+            initial={{ opacity: 1 }}
+            animate={{ opacity: 1 }}
             transition={{ duration: 0.3 }}
         >
             <canvas ref={canvasRef} className="waveform-canvas" />

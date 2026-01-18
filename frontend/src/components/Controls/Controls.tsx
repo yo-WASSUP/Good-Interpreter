@@ -72,10 +72,8 @@ export function Controls({
                 </span>
             </div>
 
-            {/* Volume Visualizer */}
-            {isRecording && (
-                <VolumeVisualizer volume={volume} frequencyData={frequencyData} isActive={true} />
-            )}
+            {/* Volume Visualizer - Always visible */}
+            <VolumeVisualizer volume={volume} frequencyData={frequencyData} isActive={isRecording} />
 
             {/* Action Buttons */}
             <div className="action-buttons">
