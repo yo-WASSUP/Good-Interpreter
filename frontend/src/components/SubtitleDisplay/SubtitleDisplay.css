@@ -193,8 +193,12 @@
     font-style: italic;
 }
 
+/* Make target (translation) text more prominent */
 .target-row .subtitle-text {
-    color: var(--text-secondary);
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    letter-spacing: 0.01em;
 }
 
 .subtitle-time {

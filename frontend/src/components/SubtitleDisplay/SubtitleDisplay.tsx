@@ -2,7 +2,6 @@ import { useRef, useEffect } from 'react';
 import { MessageSquare, ArrowDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { SubtitleItem } from '../../types';
-import { getLanguageLabel } from '../../constants/languages';
 import { formatTime } from '../../utils/audio';
 import './SubtitleDisplay.css';
 
@@ -78,7 +77,7 @@ export function SubtitleDisplay({
                                 <div className="subtitle-content">
                                     <div className="subtitle-row source-row">
                                         <span className="lang-tag source-tag">
-                                            {getLanguageLabel(item.sourceLanguage)}
+                                            原文
                                         </span>
                                         <p className="subtitle-text">
                                             {item.sourceText || '-'}
@@ -86,7 +85,7 @@ export function SubtitleDisplay({
                                     </div>
                                     <div className="subtitle-row target-row">
                                         <span className="lang-tag target-tag">
-                                            {getLanguageLabel(item.targetLanguage)}
+                                            译文
                                         </span>
                                         <p className="subtitle-text">
                                             {item.targetText || '-'}

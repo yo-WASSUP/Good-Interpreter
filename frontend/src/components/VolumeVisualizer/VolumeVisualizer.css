@@ -1,92 +1,42 @@
 .volume-visualizer {
     display: flex;
     align-items: center;
-    gap: var(--space-md);
-    padding: 0 var(--space-md);
+    justify-content: center;
+    width: 100%;
+    max-width: 150px;
+    height: 48px;
+    padding: 8px 16px;
+    background: linear-gradient(135deg,
+            rgba(15, 15, 25, 0.8),
+            rgba(25, 25, 40, 0.8));
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: 16px;
     opacity: 0;
-    transition: var(--transition-base);
+    transition: all 0.3s ease;
     pointer-events: none;
+    backdrop-filter: blur(12px);
 }
 
 .volume-visualizer.active {
     opacity: 1;
     pointer-events: auto;
+    border-color: rgba(139, 92, 246, 0.5);
+    box-shadow:
+        0 4px 20px rgba(99, 102, 241, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
-.volume-ring {
-    position: relative;
-    width: 56px;
-    height: 56px;
-}
-
-.volume-svg {
+.waveform-canvas {
     width: 100%;
     height: 100%;
-    transform: rotate(-90deg);
-}
-
-.volume-bg {
-    fill: none;
-    stroke: var(--glass-border);
-    stroke-width: 4;
-}
-
-.volume-level {
-    fill: none;
-    stroke: var(--accent-primary);
-    stroke-width: 4;
-    stroke-linecap: round;
-    stroke-dasharray: 283;
-    stroke-dashoffset: 283;
-    transition: stroke-dashoffset 0.1s ease-out, stroke 0.3s ease;
-}
-
-.volume-visualizer.loud .volume-level {
-    stroke: var(--status-error);
-}
-
-.volume-icon {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: var(--accent-primary-light);
-    transition: color 0.3s ease;
-}
-
-.volume-visualizer.loud .volume-icon {
-    color: var(--status-error);
-}
-
-.volume-bars {
-    display: flex;
-    align-items: flex-end;
-    gap: 3px;
-    height: 36px;
-}
-
-.vol-bar {
-    width: 4px;
-    height: 4px;
-    background: var(--accent-primary);
-    border-radius: 2px;
-    transition: height 0.05s ease-out, background 0.3s ease;
-}
-
-.volume-visualizer.loud .vol-bar {
-    background: var(--status-error);
-}
-
-.volume-label {
-    font-size: 0.75rem;
-    font-weight: 500;
-    color: var(--text-secondary);
-    min-width: 36px;
-    text-align: center;
+    display: block;
+    border-radius: 8px;
 }
 
 @media (max-width: 768px) {
     .volume-visualizer {
-        display: none;
+        max-width: 100%;
+        height: 48px;
+        padding: 6px 12px;
     }
 }
