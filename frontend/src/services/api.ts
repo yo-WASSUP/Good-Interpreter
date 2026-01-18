@@ -98,3 +98,23 @@ export function messagesToSubtitles(messages: MessageResponse[]): SubtitleItem[]
         targetLanguage: msg.targetLanguage,
     }));
 }
+
+/**
+ * Summarize meeting messages using Gemini AI.
+ */
+export async function summarizeMeeting(
+    messages: Array<{ sourceText: string; targetText: string }>
+): Promise<string> {
+    const response = await fetch(`${API_BASE}/summarize`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages }),
+    });
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to summarize meeting');
+    }
+    const data = await response.json();
+    return data.summary;
+}
+

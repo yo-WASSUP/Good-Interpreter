@@ -70,9 +70,30 @@ async def update_session_title(request: web.Request) -> web.Response:
     return web.json_response({"success": True})
 
 
+async def summarize_meeting(request: web.Request) -> web.Response:
+    """Summarize meeting messages using Gemini API."""
+    from ..services.gemini import get_gemini_service
+    
+    data = await request.json()
+    messages = data.get("messages", [])
+    
+    if not messages:
+        return web.json_response({"error": "No messages provided"}, status=400)
+    
+    gemini = get_gemini_service()
+    summary = await gemini.summarize_meeting(messages)
+    
+    if summary is None:
+        return web.json_response({"error": "Failed to generate summary"}, status=500)
+    
+    return web.json_response({"summary": summary})
+
+
 def setup_api_routes(app: web.Application):
     """Setup REST API routes."""
     app.router.add_get("/api/sessions", get_sessions)
     app.router.add_get("/api/sessions/active", get_active_session)
     app.router.add_get("/api/sessions/{session_id}", get_session)
     app.router.add_patch("/api/sessions/{session_id}", update_session_title)
+    app.router.add_post("/api/summarize", summarize_meeting)
+
