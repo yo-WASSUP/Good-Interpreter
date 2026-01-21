@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useMemo } from 'react';
 import { MessageSquare, Download, Sparkles, X, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
@@ -17,21 +17,44 @@ interface SubtitleDisplayProps {
 export function SubtitleDisplay({
     subtitles,
     isEmpty,
-    currentSourceText = '',
-    currentTargetText = '',
+    currentSourceText: _currentSourceText = '',
+    currentTargetText: _currentTargetText = '',
 }: SubtitleDisplayProps) {
-    const containerRef = useRef<HTMLDivElement>(null);
-    const bottomRef = useRef<HTMLDivElement>(null);
+    const leftBottomRef = useRef<HTMLDivElement>(null);
+    const rightBottomRef = useRef<HTMLDivElement>(null);
     const [showSummary, setShowSummary] = useState(false);
     const [summary, setSummary] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
-    // Auto-scroll to bottom when new subtitles are added
+    // Split subtitles by direction
+    const { zhToEn, enToZh } = useMemo(() => {
+        const zhToEn: SubtitleItem[] = [];
+        const enToZh: SubtitleItem[] = [];
+
+        subtitles.forEach(item => {
+            // Check source language to determine direction
+            if (item.sourceLanguage === 'zh' || item.sourceLanguage === 'zh-CN') {
+                zhToEn.push(item);
+            } else {
+                enToZh.push(item);
+            }
+        });
+
+        return { zhToEn, enToZh };
+    }, [subtitles]);
+
+    // Auto-scroll both columns to bottom
     useEffect(() => {
-        if (bottomRef.current) {
-            bottomRef.current.scrollIntoView({ behavior: 'smooth' });
-        }
-    }, [subtitles, currentSourceText, currentTargetText]);
+        // Small delay to ensure DOM is updated
+        setTimeout(() => {
+            if (leftBottomRef.current) {
+                leftBottomRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            }
+            if (rightBottomRef.current) {
+                rightBottomRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            }
+        }, 50);
+    }, [zhToEn, enToZh]);
 
     // Export meeting records as text file
     const handleExport = () => {
@@ -42,15 +65,22 @@ export function SubtitleDisplay({
 
         let content = `会议记录\n日期: ${date} ${time}\n${'='.repeat(50)}\n\n`;
 
-        subtitles.forEach((item, index) => {
+        content += `【中文 → 英文】\n${'-'.repeat(30)}\n`;
+        zhToEn.forEach((item, index) => {
             content += `[${index + 1}] ${formatTime(item.timestamp)}\n`;
-            content += `原文: ${item.sourceText || '-'}\n`;
-            content += `译文: ${item.targetText || '-'}\n\n`;
+            content += `中文: ${item.sourceText || '-'}\n`;
+            content += `英文: ${item.targetText || '-'}\n\n`;
+        });
+
+        content += `\n【英文 → 中文】\n${'-'.repeat(30)}\n`;
+        enToZh.forEach((item, index) => {
+            content += `[${index + 1}] ${formatTime(item.timestamp)}\n`;
+            content += `英文: ${item.sourceText || '-'}\n`;
+            content += `中文: ${item.targetText || '-'}\n\n`;
         });
 
         content += `${'='.repeat(50)}\n共 ${subtitles.length} 条记录\n`;
 
-        // Create and download file
         const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -84,7 +114,32 @@ export function SubtitleDisplay({
         }
     };
 
-    const hasCurrentText = currentSourceText || currentTargetText;
+    // Render a single message item
+    const renderItem = (item: SubtitleItem, _index: number, isZhToEn: boolean) => (
+        <motion.div
+            key={item.id}
+            className="subtitle-item"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
+        >
+            <div className="subtitle-content">
+                <div className="subtitle-row source-row">
+                    <span className={`lang-tag ${isZhToEn ? 'zh-tag' : 'en-tag'}`}>
+                        {isZhToEn ? '中' : 'EN'}
+                    </span>
+                    <p className="subtitle-text">{item.sourceText || '-'}</p>
+                </div>
+                <div className="subtitle-row target-row">
+                    <span className={`lang-tag ${isZhToEn ? 'en-tag' : 'zh-tag'}`}>
+                        {isZhToEn ? 'EN' : '中'}
+                    </span>
+                    <p className="subtitle-text">{item.targetText || '-'}</p>
+                </div>
+            </div>
+            <div className="subtitle-time">{formatTime(item.timestamp)}</div>
+        </motion.div>
+    );
 
     return (
         <section className="subtitle-section">
@@ -182,93 +237,48 @@ export function SubtitleDisplay({
                 )}
             </AnimatePresence>
 
-            <div className="subtitle-container" ref={containerRef}>
-                <AnimatePresence>
-                    {isEmpty && subtitles.length === 0 && !hasCurrentText && (
-                        <motion.div
-                            className="empty-state"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                        >
-                            <div className="empty-icon">
-                                <MessageSquare size={32} />
-                            </div>
-                            <p className="empty-title">准备开始翻译</p>
-                            <p className="empty-subtitle">
-                                点击下方按钮开始实时翻译
-                            </p>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-
-                <div className="subtitles-wrapper">
-                    <AnimatePresence>
-                        {subtitles.map((item, index) => (
-                            <motion.div
-                                key={item.id}
-                                className="subtitle-item"
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.2 }}
-                            >
-                                <div className="subtitle-index">{index + 1}</div>
-                                <div className="subtitle-content">
-                                    <div className="subtitle-row source-row">
-                                        <span className="lang-tag source-tag">
-                                            原文
-                                        </span>
-                                        <p className="subtitle-text">
-                                            {item.sourceText || '-'}
-                                        </p>
-                                    </div>
-                                    <div className="subtitle-row target-row">
-                                        <span className="lang-tag target-tag">
-                                            译文
-                                        </span>
-                                        <p className="subtitle-text">
-                                            {item.targetText || '-'}
-                                        </p>
-                                    </div>
+            {/* Two-column layout */}
+            <div className="subtitle-columns">
+                {/* Left: Chinese to English */}
+                <div className="subtitle-column left-column">
+                    <div className="column-header">
+                        <span className="column-title">🇨🇳 中文 → 英文 🇺🇸</span>
+                        <span className="column-count">{zhToEn.length}</span>
+                    </div>
+                    <div className="column-content">
+                        <AnimatePresence>
+                            {zhToEn.length === 0 && isEmpty ? (
+                                <div className="empty-column">
+                                    <MessageSquare size={24} />
+                                    <span>等待中文输入...</span>
                                 </div>
-                                <div className="subtitle-time">
-                                    {formatTime(item.timestamp)}
-                                </div>
-                            </motion.div>
-                        ))}
-                    </AnimatePresence>
+                            ) : (
+                                zhToEn.map((item, index) => renderItem(item, index, true))
+                            )}
+                        </AnimatePresence>
+                        <div ref={leftBottomRef} />
+                    </div>
+                </div>
 
-                    {/* Current speaking indicator */}
-                    {hasCurrentText && (
-                        <motion.div
-                            className="subtitle-item current-speaking"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                        >
-                            <div className="subtitle-index speaking-indicator">
-                                <span className="speaking-dot" />
-                            </div>
-                            <div className="subtitle-content">
-                                <div className="subtitle-row source-row">
-                                    <span className="lang-tag source-tag">原文</span>
-                                    <p className="subtitle-text interim">
-                                        {currentSourceText || '正在听...'}
-                                    </p>
+                {/* Right: English to Chinese */}
+                <div className="subtitle-column right-column">
+                    <div className="column-header">
+                        <span className="column-title">🇺🇸 英文 → 中文 🇨🇳</span>
+                        <span className="column-count">{enToZh.length}</span>
+                    </div>
+                    <div className="column-content">
+                        <AnimatePresence>
+                            {enToZh.length === 0 && isEmpty ? (
+                                <div className="empty-column">
+                                    <MessageSquare size={24} />
+                                    <span>Waiting for English input...</span>
                                 </div>
-                                {currentTargetText && (
-                                    <div className="subtitle-row target-row">
-                                        <span className="lang-tag target-tag">译文</span>
-                                        <p className="subtitle-text interim">
-                                            {currentTargetText}
-                                        </p>
-                                    </div>
-                                )}
-                            </div>
-                        </motion.div>
-                    )}
-
-                    {/* Scroll anchor */}
-                    <div ref={bottomRef} />
+                            ) : (
+                                enToZh.map((item, index) => renderItem(item, index, false))
+                            )}
+                        </AnimatePresence>
+                        <div ref={rightBottomRef} />
+                    </div>
                 </div>
             </div>
         </section>

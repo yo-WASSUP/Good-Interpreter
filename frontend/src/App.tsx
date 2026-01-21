@@ -21,10 +21,12 @@ function App() {
     currentAsr,
     currentTranslation,
     subtitles,
+    isMuted,
     connect,
     sendAudio,
     sendStop,
     clearSubtitles,
+    toggleMute,
   } = useWebSocket({ sourceLanguage, targetLanguage });
 
   const handleVolumeChange = useCallback(
@@ -98,11 +100,13 @@ function App() {
           selectedMicrophoneId={selectedMicrophoneId}
           volume={volume}
           frequencyData={frequencyData}
+          isMuted={isMuted}
           onStart={handleStart}
           onStop={handleStop}
           onClear={handleClear}
           onMicrophoneChange={selectMicrophone}
           onRefreshMicrophones={refreshMicrophones}
+          onToggleMute={toggleMute}
         />
       </div>
     </>

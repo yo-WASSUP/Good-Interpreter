@@ -204,14 +204,19 @@ async def websocket_handler(request: web.Request) -> web.WebSocketResponse:
         # Handle sentence complete - save to database
         elif msg_type == "sentenceComplete":
             if direction == active_direction and (current_source_text or current_target_text):
-                # Send to frontend
-                await ws.send_str(json.dumps({"type": "sentenceComplete"}))
+                # Determine source language from direction
+                source_lang = "zh" if current_direction == "zh→en" else "en"
+                target_lang = "en" if current_direction == "zh→en" else "zh"
+                
+                # Send to frontend with direction info
+                await ws.send_str(json.dumps({
+                    "type": "sentenceComplete",
+                    "sourceLanguage": source_lang,
+                    "targetLanguage": target_lang,
+                }))
                 
                 # Save to database
                 try:
-                    source_lang = "zh" if current_direction == "zh→en" else "en"
-                    target_lang = "en" if current_direction == "zh→en" else "zh"
-                    
                     db.add_message(
                         session_id=session.session_id,
                         source_text=current_source_text,

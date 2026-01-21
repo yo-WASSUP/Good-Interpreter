@@ -3,6 +3,7 @@ import { base64ToArrayBuffer } from '../utils/audio';
 
 interface UseAudioPlayerReturn {
     isPlaying: boolean;
+    isMuted: boolean;
     /** Add audio chunk to buffer (does not play immediately) */
     queueAudio: (base64Data: string) => void;
     /** Play all queued audio chunks */
@@ -11,11 +12,22 @@ interface UseAudioPlayerReturn {
     stopPlayback: () => void;
     /** Check if there's audio in the queue */
     hasQueuedAudio: () => boolean;
+    /** Toggle mute state */
+    toggleMute: () => void;
 }
 
 export function useAudioPlayer(): UseAudioPlayerReturn {
     const [isPlaying, setIsPlaying] = useState(false);
+    const [isMuted, setIsMuted] = useState(false);
     const audioChunksRef = useRef<ArrayBuffer[]>([]);
+    const isMutedRef = useRef(false);
+
+    const toggleMute = useCallback(() => {
+        setIsMuted(prev => {
+            isMutedRef.current = !prev;
+            return !prev;
+        });
+    }, []);
 
     const queueAudio = useCallback((base64Data: string) => {
         const audioData = base64ToArrayBuffer(base64Data);
@@ -24,6 +36,12 @@ export function useAudioPlayer(): UseAudioPlayerReturn {
 
     const playQueuedAudio = useCallback(async () => {
         if (audioChunksRef.current.length === 0 || isPlaying) return;
+
+        // If muted, just clear the queue and return
+        if (isMutedRef.current) {
+            audioChunksRef.current = [];
+            return;
+        }
 
         setIsPlaying(true);
 
@@ -79,5 +97,6 @@ export function useAudioPlayer(): UseAudioPlayerReturn {
         return audioChunksRef.current.length > 0;
     }, []);
 
-    return { isPlaying, queueAudio, playQueuedAudio, stopPlayback, hasQueuedAudio };
+    return { isPlaying, isMuted, queueAudio, playQueuedAudio, stopPlayback, hasQueuedAudio, toggleMute };
 }
+

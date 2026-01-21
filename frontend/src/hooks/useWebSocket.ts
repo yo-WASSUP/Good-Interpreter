@@ -15,12 +15,14 @@ interface UseWebSocketReturn {
     currentAsr: { text: string; isFinal: boolean };
     currentTranslation: { text: string; isFinal: boolean };
     subtitles: SubtitleItem[];
+    isMuted: boolean;
     connect: () => void;
     disconnect: () => void;
     sendAudio: (base64Data: string) => void;
     sendStop: () => void;
     clearSubtitles: () => void;
     loadHistory: () => Promise<void>;
+    toggleMute: () => void;
 }
 
 export function useWebSocket({
@@ -41,7 +43,7 @@ export function useWebSocket({
     const currentTranslationRef = useRef('');
     const languagesRef = useRef({ source: sourceLanguage, target: targetLanguage });
 
-    const { queueAudio, playQueuedAudio, stopPlayback } = useAudioPlayer();
+    const { queueAudio, playQueuedAudio, stopPlayback, isMuted, toggleMute } = useAudioPlayer();
 
     // Update language refs
     useEffect(() => {
@@ -67,15 +69,15 @@ export function useWebSocket({
         loadHistory();
     }, [loadHistory]);
 
-    const addSubtitle = useCallback(() => {
+    const addSubtitle = useCallback((sourceLang?: string, targetLang?: string) => {
         if (currentAsrRef.current || currentTranslationRef.current) {
             const newSubtitle: SubtitleItem = {
                 id: generateId(),
                 timestamp: new Date(),
                 sourceText: currentAsrRef.current,
                 targetText: currentTranslationRef.current,
-                sourceLanguage: languagesRef.current.source,
-                targetLanguage: languagesRef.current.target,
+                sourceLanguage: sourceLang || languagesRef.current.source,
+                targetLanguage: targetLang || languagesRef.current.target,
             };
             setSubtitles((prev) => [...prev, newSubtitle]);
         }
@@ -154,8 +156,8 @@ export function useWebSocket({
                     break;
 
                 case 'sentenceComplete':
-                    // Add subtitle and play queued audio when a sentence's TTS is complete
-                    addSubtitle();
+                    // Add subtitle with language info from backend and play queued audio
+                    addSubtitle(data.sourceLanguage, data.targetLanguage);
                     playQueuedAudio();
                     break;
 
@@ -228,11 +230,13 @@ export function useWebSocket({
         currentAsr,
         currentTranslation,
         subtitles,
+        isMuted,
         connect,
         disconnect,
         sendAudio,
         sendStop,
         clearSubtitles,
         loadHistory,
+        toggleMute,
     };
 }

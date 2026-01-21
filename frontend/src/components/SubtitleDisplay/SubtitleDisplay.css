@@ -3,7 +3,9 @@
     flex-direction: column;
     flex: 1;
     min-height: 0;
+    max-height: calc(100vh - 250px);
     position: relative;
+    overflow: hidden;
 }
 
 .subtitle-header-bar {
@@ -173,17 +175,81 @@
     white-space: pre-wrap;
 }
 
-.subtitle-container {
+/* Two-column layout */
+.subtitle-columns {
     flex: 1;
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding: var(--space-sm);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-md);
+    min-height: 0;
+    max-height: 100%;
+    overflow: hidden;
+}
+
+.subtitle-column {
+    display: flex;
+    flex-direction: column;
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-lg);
     backdrop-filter: blur(20px);
-    min-height: 400px;
-    max-height: 70vh;
+    overflow: hidden;
+    min-height: 300px;
+    max-height: 100%;
+}
+
+.left-column {
+    border-left: 3px solid #ef4444;
+}
+
+.right-column {
+    border-left: 3px solid #3b82f6;
+}
+
+.column-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-sm) var(--space-md);
+    background: rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.column-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.column-count {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    background: var(--bg-card);
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+.column-content {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: var(--space-sm);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    min-height: 0;
+}
+
+.empty-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    padding: var(--space-xl);
+    color: var(--text-muted);
+    text-align: center;
+    height: 150px;
 }
 
 .subtitles-wrapper {
@@ -322,6 +388,17 @@
 .target-tag {
     background: rgba(34, 197, 94, 0.15);
     color: #4ade80;
+}
+
+/* Language-specific tags */
+.zh-tag {
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+}
+
+.en-tag {
+    background: rgba(59, 130, 246, 0.15);
+    color: #60a5fa;
 }
 
 .subtitle-text {

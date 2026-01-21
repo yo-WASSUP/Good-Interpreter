@@ -71,8 +71,8 @@ async def update_session_title(request: web.Request) -> web.Response:
 
 
 async def summarize_meeting(request: web.Request) -> web.Response:
-    """Summarize meeting messages using Gemini API."""
-    from ..services.gemini import get_gemini_service
+    """Summarize meeting messages using OpenAI API."""
+    from ..services.summarizer import get_summarizer_service
     
     data = await request.json()
     messages = data.get("messages", [])
@@ -80,8 +80,8 @@ async def summarize_meeting(request: web.Request) -> web.Response:
     if not messages:
         return web.json_response({"error": "No messages provided"}, status=400)
     
-    gemini = get_gemini_service()
-    summary = await gemini.summarize_meeting(messages)
+    summarizer = get_summarizer_service()
+    summary = await summarizer.summarize_meeting(messages)
     
     if summary is None:
         return web.json_response({"error": "Failed to generate summary"}, status=500)

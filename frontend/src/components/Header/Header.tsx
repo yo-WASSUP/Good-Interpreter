@@ -29,8 +29,7 @@ export function Header({ status }: HeaderProps) {
                     <Mic size={28} />
                 </motion.div>
                 <h1>
-                    实时翻译
-                    <span className="logo-highlight">Translator</span>
+                    会议同声传译
                 </h1>
             </div>
 

@@ -108,7 +108,7 @@ class SummaryService:
 _summary_service: Optional[SummaryService] = None
 
 
-def get_gemini_service() -> SummaryService:
+def get_summarizer_service() -> SummaryService:
     """Get the global summary service instance."""
     global _summary_service
     if _summary_service is None:

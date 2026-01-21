@@ -1,4 +1,4 @@
-import { Mic, Square, Trash2, RefreshCw } from 'lucide-react';
+import { Mic, Square, Trash2, RefreshCw, Volume2, VolumeX } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { MicrophoneDevice } from '../../types';
 import { VolumeVisualizer } from '../VolumeVisualizer';
@@ -10,11 +10,13 @@ interface ControlsProps {
     selectedMicrophoneId: string | null;
     volume: number;
     frequencyData: Uint8Array | null;
+    isMuted: boolean;
     onStart: () => void;
     onStop: () => void;
     onClear: () => void;
     onMicrophoneChange: (deviceId: string) => void;
     onRefreshMicrophones: () => void;
+    onToggleMute: () => void;
 }
 
 export function Controls({
@@ -23,11 +25,13 @@ export function Controls({
     selectedMicrophoneId,
     volume,
     frequencyData,
+    isMuted,
     onStart,
     onStop,
     onClear,
     onMicrophoneChange,
     onRefreshMicrophones,
+    onToggleMute,
 }: ControlsProps) {
     return (
         <footer className="controls">
@@ -107,6 +111,16 @@ export function Controls({
                     title="清空记录"
                 >
                     <Trash2 size={18} />
+                </motion.button>
+
+                <motion.button
+                    className={`btn btn-secondary btn-mute ${isMuted ? 'muted' : ''}`}
+                    onClick={onToggleMute}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    title={isMuted ? '取消静音' : '静音朗读'}
+                >
+                    {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
                 </motion.button>
             </div>
         </footer>
