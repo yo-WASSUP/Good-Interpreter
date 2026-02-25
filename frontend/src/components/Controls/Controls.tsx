@@ -72,7 +72,7 @@ export function Controls({
             {/* Translation Mode Display */}
             <div className="translation-mode">
                 <span className="mode-badge">
-                    🇨🇳 中文 ↔ 🇺🇸 English
+                    🇨🇳 中文 ↔ en English
                 </span>
             </div>
 

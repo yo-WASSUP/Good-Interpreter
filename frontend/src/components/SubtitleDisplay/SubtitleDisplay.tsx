@@ -242,7 +242,7 @@ export function SubtitleDisplay({
                 {/* Left: Chinese to English */}
                 <div className="subtitle-column left-column">
                     <div className="column-header">
-                        <span className="column-title">🇨🇳 中文 → 英文 🇺🇸</span>
+                        <span className="column-title">🇨🇳 中文 → en 英文 </span>
                         <span className="column-count">{zhToEn.length}</span>
                     </div>
                     <div className="column-content">
@@ -263,7 +263,7 @@ export function SubtitleDisplay({
                 {/* Right: English to Chinese */}
                 <div className="subtitle-column right-column">
                     <div className="column-header">
-                        <span className="column-title">🇺🇸 英文 → 中文 🇨🇳</span>
+                        <span className="column-title">en 英文 → 🇨🇳 中文 </span>
                         <span className="column-count">{enToZh.length}</span>
                     </div>
                     <div className="column-content">

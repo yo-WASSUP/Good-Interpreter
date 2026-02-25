@@ -209,3 +209,9 @@
         flex-wrap: wrap;
     }
 }
+
+/* ===== Light Theme ===== */
+[data-theme="light"] .mic-select option {
+    background: #ffffff;
+    color: var(--text-primary);
+}

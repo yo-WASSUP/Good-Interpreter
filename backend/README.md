@@ -31,6 +31,7 @@ backend/
 cd backend
 python -m venv venv
 source venv/bin/activate  # macOS/Linux
+.\venv\Scripts\Activate  # Windows
 pip install -r requirements.txt
 ```
 
@@ -56,6 +57,12 @@ PORT=3000
 ./start.sh
 # 或
 source venv/bin/activate && python -m app.main
+
+# 激活虚拟环境
+.\venv\Scripts\Activate
+
+# 运行 Python 后端
+python -m app.main
 ```
 
 服务启动后：

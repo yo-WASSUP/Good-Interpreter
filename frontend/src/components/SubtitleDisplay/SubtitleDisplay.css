@@ -480,3 +480,34 @@
         font-size: 0.85rem;
     }
 }
+
+/* ===== Light Theme ===== */
+[data-theme="light"] .summary-overlay {
+    background: rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="light"] .summary-modal {
+    background: #ffffff;
+    border-color: rgba(139, 92, 246, 0.2);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="light"] .summary-header {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.06), rgba(236, 72, 153, 0.06));
+}
+
+[data-theme="light"] .summary-close:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .column-header {
+    background: rgba(0, 0, 0, 0.02);
+}
+
+[data-theme="light"] .subtitle-index {
+    background: var(--bg-primary);
+}
+
+[data-theme="light"] .subtitle-item.current-speaking {
+    background: rgba(99, 102, 241, 0.06);
+}
