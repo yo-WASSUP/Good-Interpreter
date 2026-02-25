@@ -1,0 +1,77 @@
+import { useState, useEffect, useCallback } from 'react';
+import { Mic, Sun, Moon } from 'lucide-react';
+import { motion } from 'framer-motion';
+import type { ConnectionStatus } from '../../types';
+import './Header.css';
+
+interface HeaderProps {
+    status: ConnectionStatus;
+}
+
+const statusConfig: Record<ConnectionStatus, { text: string; className: string }> = {
+    disconnected: { text: '等待连接', className: '' },
+    connecting: { text: '正在连接...', className: '' },
+    connected: { text: '已连接', className: 'connected' },
+    recording: { text: '正在录音...', className: 'recording' },
+    error: { text: '连接错误', className: 'error' },
+};
+
+function getInitialTheme(): 'dark' | 'light' {
+    const saved = localStorage.getItem('theme');
+    if (saved === 'light' || saved === 'dark') return saved;
+    return 'dark';
+}
+
+export function Header({ status }: HeaderProps) {
+    const config = statusConfig[status];
+    const [theme, setTheme] = useState<'dark' | 'light'>(getInitialTheme);
+
+    // Apply theme on mount and changes
+    useEffect(() => {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+    }, [theme]);
+
+    const toggleTheme = useCallback(() => {
+        setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+    }, []);
+
+    return (
+        <header className="header">
+            <div className="logo">
+                <motion.div
+                    className="logo-icon"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                >
+                    <Mic size={28} />
+                </motion.div>
+                <h1>
+                    会议同声传译 Good-Interpreter
+                </h1>
+            </div>
+
+            <div className="header-actions">
+                <motion.button
+                    className="theme-toggle"
+                    onClick={toggleTheme}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    title={theme === 'dark' ? '切换到亮色模式' : '切换到暗色模式'}
+                >
+                    {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+                </motion.button>
+
+                <motion.div
+                    className={`status-badge ${config.className}`}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3 }}
+                >
+                    <span className="status-dot" />
+                    <span className="status-text">{config.text}</span>
+                </motion.div>
+            </div>
+        </header>
+    );
+}

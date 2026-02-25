@@ -1,0 +1,6 @@
+# Database files
+translations.db
+*.db
+
+# Keep this directory
+!.gitignore
